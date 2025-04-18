@@ -1,5 +1,6 @@
 // accessing the Schema and model from mongoose
 import { Schema, model } from "mongoose";
+import bcrypt from "bcrypt";
 
 // dafining the user-structure
 const userSchema = new Schema(
@@ -51,6 +52,14 @@ const userSchema = new Schema(
   }
 );
 
+// for encrypting the user-password
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) {
+    return next();
+  }
+  // password is modified
+  this.password = await bcrypt.hash(this.password, 10);
+});
 // creating the userSchema-model
 const User = model("user", userSchema);
 
