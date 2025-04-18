@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 import morgan from "morgan";
 
 import userRouter from "./routes/user.routes.js";
+import errorMiddleware from "./middlewares/error.middleware.js";
 
 // creating app from express
 const app = express();
@@ -39,5 +40,7 @@ app.get("/", (req, res) => {
 // for version-1 --> student
 app.use("/api/v1/user", userRouter);
 
+// for handeling custom error-handeling AppError in middleware
+app.use(errorMiddleware);
 // exporting the app module
 export default app;
