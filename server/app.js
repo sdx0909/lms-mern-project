@@ -42,5 +42,6 @@ app.use("/api/v1/user", userRouter);
 
 // for handeling custom error-handeling AppError in middleware
 app.use(errorMiddleware);
+
 // exporting the app module
 export default app;

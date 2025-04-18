@@ -10,8 +10,8 @@ const cookieOptions = {
 };
 
 // defining the user-controllers
-const register = async (req, res) => {
-  const { fullName, email, password } = req.body;
+const register = async (req, res, next) => {
+  const { fullName, email, password, role } = req.body;
 
   // validations
   if (!fullName || !email || !password) {
@@ -33,6 +33,7 @@ const register = async (req, res) => {
     fullName,
     email,
     password,
+    role,
     avatar: {
       public_id: email,
       secure_url:
@@ -67,7 +68,7 @@ const register = async (req, res) => {
   });
 };
 
-const login = async (req, res) => {
+const login = async (req, res, next) => {
   const { email, password } = req.body;
 
   // happy-handeling in try-catch
@@ -79,9 +80,14 @@ const login = async (req, res) => {
 
     const user = await User.findOne({ email }).select("+password");
 
-    // user and password not matched
-    if (!user || !user.comparePassword(password)) {
-      return next(new AppError("email and password does not match", 400));
+    // If no user or sent password do not match then send generic response
+    if (!(user && (await user.comparePassword(password)))) {
+      return next(
+        new AppError(
+          "Email or Password do not match or user does not exist",
+          401
+        )
+      );
     }
 
     // generating the token and setting in the cookie
@@ -101,9 +107,9 @@ const login = async (req, res) => {
   }
 };
 
-const logout = (req, res) => {};
+const logout = (req, res, next) => {};
 
-const getProfile = (req, res) => {};
+const getProfile = (req, res, next) => {};
 
 // exporting the controller
 export { register, login, logout, getProfile };
