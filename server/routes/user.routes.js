@@ -10,7 +10,7 @@ import {
 // creating the router
 const router = Router();
 
-// creating the sub-routes
+// creating the sub-routes of "/api/v1/user"
 router.post("/register", register);
 router.post("/login", login);
 router.get("/logout", logout);

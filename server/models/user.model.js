@@ -1,6 +1,9 @@
 // accessing the Schema and model from mongoose
 import { Schema, model } from "mongoose";
+import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
+import { config } from "dotenv";
+config();
 
 // dafining the user-structure
 const userSchema = new Schema(
@@ -60,6 +63,27 @@ userSchema.pre("save", async function (next) {
   // password is modified
   this.password = await bcrypt.hash(this.password, 10);
 });
+
+// generic-methods for jwtTokens
+userSchema.methods = {
+  generateJWTToken: async function () {
+    return await jwt.sign(
+      {
+        id: this._id,
+        email: this.email,
+        subscription: this.subscription,
+        role: this.role,
+      },
+      process.env.SECRET,
+      { expiresIn: process.env.JWT_EXPIRY }
+    );
+  },
+  // comparing the encrypted-password
+  comparePassword: async function (plainTextPassword) {
+    return await bcrypt.compare(plainTextPassword, this.password);
+  },
+};
+
 // creating the userSchema-model
 const User = model("user", userSchema);
 

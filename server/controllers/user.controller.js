@@ -1,6 +1,14 @@
 import User from "../models/user.model.js";
 // importing the AppError
 import AppError from "../utils/error.util.js";
+
+// general for all cookie-options
+const cookieOptions = {
+  maxAge: 7 * 24 * 60 * 60 * 1000, // 7days
+  httpOnly: true,
+  secure: true,
+};
+
 // defining the user-controllers
 const register = async (req, res) => {
   const { fullName, email, password } = req.body;
@@ -27,7 +35,8 @@ const register = async (req, res) => {
     password,
     avatar: {
       public_id: email,
-      secure_url: "", // todo : attaching the url
+      secure_url:
+        "https://res.cloudinary.com/du9jzqlpt/image/upload/v1674647316/avatar_drzgxv.jpg",
     },
   });
 
@@ -39,9 +48,58 @@ const register = async (req, res) => {
 
   // finally user save
   await user.save();
+  // for securing the password
+  user.password = undefined;
+
+  // directly login the user
+  // generating the token
+  const token = await user.generateJWTToken();
+
+  // creating the cookie
+  res.cookie("token", token, cookieOptions);
+
+  // console.log(user);
+  // getting the success-response
+  res.status(201).json({
+    status: "success",
+    message: "User registered Successfully",
+    user,
+  });
 };
 
-const login = (req, res) => {};
+const login = async (req, res) => {
+  const { email, password } = req.body;
+
+  // happy-handeling in try-catch
+  try {
+    // validations
+    if (!email || !password) {
+      return next(AppError("Please provide email and password", 400));
+    }
+
+    const user = await User.findOne({ email }).select("+password");
+
+    // user and password not matched
+    if (!user || !user.comparePassword(password)) {
+      return next(new AppError("email and password does not match", 400));
+    }
+
+    // generating the token and setting in the cookie
+    const token = await user.generateJWTToken();
+    user.password = undefined;
+
+    res.cookie("token", token, cookieOptions);
+
+    // lastly sending success-response
+    res.status(200).json({
+      success: true,
+      message: "User Logged-in Successfully",
+      user,
+    });
+  } catch (e) {
+    return next(new AppError(e.message, 500));
+  }
+};
 
 const logout = (req, res) => {};
 
