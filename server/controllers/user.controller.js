@@ -122,7 +122,23 @@ const logout = (req, res, next) => {
   });
 };
 
-const getProfile = (req, res, next) => {};
+const getProfile = async (req, res, next) => {
+  try {
+    // getting user from the req in middleware
+    const userId = req.user.id;
+    // finding the record/details
+    const user = await User.findById(userId);
+
+    // success-response of get-profile
+    return res.status(200).json({
+      success: true,
+      message: "User Details:",
+      user,
+    });
+  } catch (e) {
+    return next(new AppError("failed to fetch the user-details", 500));
+  }
+};
 
 // exporting the controller
 export { register, login, logout, getProfile };
