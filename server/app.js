@@ -4,6 +4,8 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import morgan from "morgan";
 
+import userRouter from "./routes/user.routes.js";
+
 // creating app from express
 const app = express();
 
@@ -19,7 +21,7 @@ app.use(cookieParser());
 app.use(morgan("dev"));
 
 // Server Status Check Route
-app.get("/ping", (_req, res) => {
+app.get("/ping", (req, res) => {
   res.send("Pong");
 });
 
@@ -33,6 +35,9 @@ app.get("/", (req, res) => {
 //   res.status(404).send("404 - Not Found");
 // });
 // routes of 3 modules
+
+// for version-1 --> student
+app.use("/api/v1/user", userRouter);
 
 // exporting the app module
 export default app;
