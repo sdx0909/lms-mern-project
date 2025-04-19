@@ -1,6 +1,8 @@
 import User from "../models/user.model.js";
 // importing the AppError
 import AppError from "../utils/error.util.js";
+import cloudinary from "cloudinary";
+import fs from "fs/promises";
 
 // general for all cookie-options
 const cookieOptions = {
@@ -36,6 +38,7 @@ const register = async (req, res, next) => {
     role,
     avatar: {
       public_id: email,
+      // default-image
       secure_url:
         "https://res.cloudinary.com/du9jzqlpt/image/upload/v1674647316/avatar_drzgxv.jpg",
     },
@@ -45,7 +48,31 @@ const register = async (req, res, next) => {
     return next(AppError("User registration failed, please try again", 400));
   }
 
-  // todo : file-upload
+  console.log(`File-Details:${JSON.stringify(req.file)}`);
+
+  // logic for file-upload
+  if (req.file) {
+    try {
+      const result = await cloudinary.v2.uploader.upload(req.file.path, {
+        folder: "lms",
+        width: 250,
+        height: 250,
+        gravity: "faces",
+        crop: "fill",
+      });
+
+      // if file uploaded successfully on coudinary
+      if (result) {
+        user.avatar.public_id = result.public_id;
+        user.avatar.secure_url = result.secure_url;
+
+        // remove file from local-systems / server
+        fs.rm(`uploads/${req.file.filename}`);
+      }
+    } catch (e) {
+      return next(new AppError("failed to upload file", 500));
+    }
+  }
 
   // finally user save
   await user.save();
