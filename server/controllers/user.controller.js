@@ -3,6 +3,7 @@ import User from "../models/user.model.js";
 import AppError from "../utils/error.util.js";
 import cloudinary from "cloudinary";
 import fs from "fs/promises";
+import sendEmail from "../utils/sendEmail.js";
 
 // general for all cookie-options
 const cookieOptions = {
@@ -19,13 +20,13 @@ const register = async (req, res, next) => {
   if (!fullName || !email || !password) {
     // returns the object of AppError
     // forwarded to utility and error-middleware
-    return next(AppError("All fields are required", 400));
+    return next(new AppError("All fields are required", 400));
   }
   // finding the user is exists or not
   const userExists = await User.findOne({ email });
 
   if (userExists) {
-    return next(AppError("Email Already exists ", 400));
+    return next(new AppError("Email Already exists ", 400));
   }
 
   //  creating the user in 2 steps
@@ -45,7 +46,9 @@ const register = async (req, res, next) => {
   });
 
   if (!user) {
-    return next(AppError("User registration failed, please try again", 400));
+    return next(
+      new AppError("User registration failed, please try again", 400)
+    );
   }
 
   console.log(`File-Details:${JSON.stringify(req.file)}`);
@@ -167,5 +170,67 @@ const getProfile = async (req, res, next) => {
   }
 };
 
+// forgotting Password 1st STEP
+const forgotPassword = async (req, res, next) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return next(new AppError("Email is Required"), 400);
+  }
+  // check the user-exists in database
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    return next(new AppError("Email not registered", 400));
+  }
+  // generating token
+  const resetToken = await user.generatePasswordResetToken();
+
+  // saving the data-into database
+  await user.save();
+
+  // generating he reset password-url
+  // constructing a url to send the correct data
+  /*
+   * HERE
+   * req.protocol will send if http or https
+   * req.get('host') will get the hostname
+   * the rest is the route that we will create to verify if token is correct or not
+   */
+  const resetPasswordUrl = `${req.protocol}://${req.get(
+    "host"
+  )}/api/v1/user/reset/${resetToken}`;
+  /***
+   * here ... we can use following link-url when our front-end part is ready
+   */
+  // const resetPasswordUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+
+  // here we need to send an email to the user with the token
+  const subject = "Reset Password";
+  const message = `You can reset your password by clicking <a href=${resetPasswordUrl} target="_blank">Reset your password</a>\nIf the above link does not work for some reason then copy paste this link in new tab ${resetPasswordUrl}.\n If you have not requested this, kindly ignore.`;
+
+  //
+  try {
+    await sendEmail(email, subject, message);
+
+    res.status(201).json({
+      success: true,
+      message: `Reset password token has been sent to ${email} successfully`,
+    });
+  } catch (e) {
+    // If some error happened we need to clear the forgotPassword* fields in our DB
+    // need to be changed
+    user.forgotPasswordExpiry = undefined;
+    user.passwordResetToken = undefined;
+
+    user.save();
+
+    return next(new AppError(e.message, 400));
+  }
+};
+
+// reseting the new password  2nd STEP
+const resetPassword = () => {};
+
 // exporting the controller
-export { register, login, logout, getProfile };
+export { register, login, logout, getProfile, forgotPassword, resetPassword };

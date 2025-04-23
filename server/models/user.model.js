@@ -3,6 +3,8 @@ import { Schema, model } from "mongoose";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { config } from "dotenv";
+import crypto from "crypto";
+
 config();
 
 // dafining the user-structure
@@ -74,13 +76,31 @@ userSchema.methods = {
         subscription: this.subscription,
         role: this.role,
       },
-      process.env.SECRET,
+      process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRY }
     );
   },
   // comparing the encrypted-password
   comparePassword: async function (plainTextPassword) {
     return await bcrypt.compare(plainTextPassword, this.password);
+  },
+  // generatePasswordReserToken
+  generatePasswordResetToken: async function () {
+    // creating the random token
+    const resetToken = await crypto.randomBytes(20).toString("hex");
+
+    // storing token and expory into database
+    // this.forgotPasswordToken = resetToken;
+
+    // storing with encrypted-token
+    this.forgotPasswordToken = crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex");
+    this.forgotPasswordExpiry = Date.now() + 15 * 60 * 1000; // 15min from now
+
+    // finally return the token
+    return resetToken;
   },
 };
 
