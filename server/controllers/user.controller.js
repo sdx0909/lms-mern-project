@@ -4,6 +4,7 @@ import AppError from "../utils/error.util.js";
 import cloudinary from "cloudinary";
 import fs from "fs/promises";
 import sendEmail from "../utils/sendEmail.js";
+import crypto from "crypto";
 
 // general for all cookie-options
 const cookieOptions = {
@@ -200,6 +201,9 @@ const forgotPassword = async (req, res, next) => {
   const resetPasswordUrl = `${req.protocol}://${req.get(
     "host"
   )}/api/v1/user/reset/${resetToken}`;
+
+  console.log(resetPasswordUrl);
+
   /***
    * here ... we can use following link-url when our front-end part is ready
    */
@@ -230,7 +234,46 @@ const forgotPassword = async (req, res, next) => {
 };
 
 // reseting the new password  2nd STEP
-const resetPassword = () => {};
+const resetPassword = async (req, res, next) => {
+  const { resetToken } = req.params;
+
+  const { password } = req.body;
+
+  // matching with enc-enc tokens from sending and recieving end
+  // for that creates newly-encryted resetPasswordToken
+  const forgotPasswordToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
+
+  // checking that encrypted-tokens mathes or not
+  // with following conditions
+  const user = await User.findOne({
+    // forgotPasswordToken: forgotPasswordToken; OR
+    forgotPasswordToken,
+    forgotPasswordExpiry: { $gt: Date.now() },
+  });
+
+  // if user is empty
+  if (!user) {
+    return next(
+      new AppError("Token is invalid or expired, please try again", 400)
+    );
+  }
+  // if all is good then set the new password
+  user.password = password;
+  user.forgotPasswordToken = undefined;
+  user.forgotPasswordExpiry = undefined;
+
+  // finally save the password with undefined-credentials
+  user.save();
+
+  // sending the success-response
+  return res.status(201).json({
+    success: true,
+    message: "password changed Successfully",
+  });
+};
 
 // exporting the controller
 export { register, login, logout, getProfile, forgotPassword, resetPassword };

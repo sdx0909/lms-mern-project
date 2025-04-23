@@ -20,6 +20,8 @@ app.use(
 );
 app.use(cookieParser());
 app.use(morgan("dev"));
+// parses the urlencoded bodies and only looks at req
+app.use(express.urlencoded({ extended: true }));
 
 // Server Status Check Route
 app.get("/ping", (req, res) => {

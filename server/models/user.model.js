@@ -89,7 +89,7 @@ userSchema.methods = {
     // creating the random token
     const resetToken = await crypto.randomBytes(20).toString("hex");
 
-    // storing token and expory into database
+    // storing token and expiry into database
     // this.forgotPasswordToken = resetToken;
 
     // storing with encrypted-token
