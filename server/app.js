@@ -4,7 +4,8 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import morgan from "morgan";
 
-import userRouter from "./routes/user.routes.js";
+import userRoutes from "./routes/user.routes.js";
+import courseRoutes from "./routes/course.routes.js";
 import errorMiddleware from "./middlewares/error.middleware.js";
 
 // creating app from express
@@ -40,8 +41,9 @@ app.get("/", (req, res) => {
 // routes of 3 modules
 
 // for version-1 --> student
-app.use("/api/v1/user", userRouter);
-
+app.use("/api/v1/user", userRoutes);
+// for version-1 --> student
+app.use("/api/v1/courses", courseRoutes);
 // for handeling custom error-handeling AppError in middleware
 app.use(errorMiddleware);
 
