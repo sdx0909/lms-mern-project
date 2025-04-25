@@ -275,5 +275,114 @@ const resetPassword = async (req, res, next) => {
   });
 };
 
+// if user is already logged-in then he has to change the password
+const changePassword = async (req, res, next) => {
+  // user inputs the old-password and new-password
+  const { oldPassword, newPassword } = req.body;
+  // requiring from middelware
+  const { id } = req.user;
+
+  console.log(
+    `OldPassword: ${oldPassword}\n NewPassword:${newPassword}\n id:${id}`
+  );
+  // if user does not input any oldPassword and newPassword
+  if (!oldPassword || !newPassword) {
+    return next(new AppError("All fields are mandatory", 400));
+  }
+
+  // finding the user-record from database on the basis of id
+  const user = await User.findById(id).select("+password");
+
+  // user is exists or not
+  if (!user) {
+    return next(new AppError("User not exists", 400));
+  }
+  // comparing the inputted password with db-password
+  const isPasswordValid = await user.comparePassword(oldPassword);
+  if (!isPasswordValid) {
+    return next(new AppError("Invalid Old Password", 400));
+  }
+  // if all doing good then
+  // set the new-password
+  user.password = newPassword;
+
+  // save the record
+  await user.save();
+  // for security setting virtually password as undefined
+  user.password = undefined;
+
+  // sending the success-response
+  return res.status(201).json({
+    success: true,
+    message: "Password Updates Successfully",
+  });
+};
+
+// if user is already logged-in then he has to update the avatar-profile picture
+const updateUser = async (req, res, next) => {
+  // update the user-full-name and profile-pictures
+  const { fullName } = req.body;
+  const { id } = req.user;
+
+  // console.log(`fullName(req.body):${fullName}`);
+  console.log(`id:${id}`);
+  const user = await User.findById(id);
+  // const user = await User.findById(id).select("+password");
+
+  if (!user) {
+    return next(new AppError("User not Exists"), 400);
+  }
+  // if user gives the fullName as input
+  if (fullName) {
+    // update the user's Fullname
+    user.fullName = fullName;
+  }
+
+  // if user gives the profile-picture as input in req.file
+  if (req.file) {
+    console.log(`User-> public_id:${user.avatar.public_id}`);
+    // delete the old-picture from coudinary
+    await cloudinary.v2.uploader.destroy(user.avatar.public_id);
+    // uploading and setting the new-profile-picture
+    try {
+      const result = await cloudinary.v2.uploader.upload(req.file.path, {
+        folder: "lms",
+        width: 250,
+        height: 250,
+        gravity: "faces",
+        crop: "fill",
+      });
+
+      // if file uploaded successfully on coudinary
+      if (result) {
+        user.avatar.public_id = result.public_id;
+        user.avatar.secure_url = result.secure_url;
+
+        // remove file from local-systems / server
+        fs.rm(`uploads/${req.file.filename}`);
+      }
+    } catch (e) {
+      return next(new AppError("failed to upload file", 500));
+    }
+  }
+  // finally save the information
+  await user.save();
+
+  // return the seccess-response
+  return res.status(201).json({
+    success: true,
+    message: "Details Updated Successfully",
+  });
+};
+
 // exporting the controller
-export { register, login, logout, getProfile, forgotPassword, resetPassword };
+export {
+  register,
+  login,
+  logout,
+  getProfile,
+  forgotPassword,
+  resetPassword,
+  changePassword,
+  updateUser,
+};
