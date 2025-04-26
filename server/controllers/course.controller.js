@@ -2,6 +2,7 @@ import { raw } from "express";
 import Course from "../models/course.model.js";
 import AppError from "../utils/error.util.js";
 import fs from "fs/promises";
+import cloudinary from "cloudinary";
 const getAllCourses = async (req, res, next) => {
   // finding all the data from Course-collection excepting the "lectures" details
   try {
@@ -52,6 +53,10 @@ const createCourse = async (req, res, next) => {
     description,
     category,
     createdBy,
+    thumbnail: {
+      public_id: "dummy",
+      secure_url: "dummy",
+    },
   });
 
   // if course not created
