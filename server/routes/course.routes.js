@@ -13,12 +13,10 @@ import upload from "../middlewares/multer.middleware.js";
 // creating the router
 const router = Router();
 
-// creating the sub-routes of "/api/v1/user"
-// another-approach
 router
   .route("/")
-  .get(upload.single("thumbnail"), getAllCourses) // for uploading the thumbnail-course-image
-  .post(createCourse);
+  .get(getAllCourses) // for uploading the thumbnail-course-image
+  .post(upload.single("thumbnail"), createCourse);
 
 router
   .route("/:id")

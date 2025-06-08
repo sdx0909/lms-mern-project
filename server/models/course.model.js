@@ -31,7 +31,7 @@ const courseSchema = new Schema(
         required: true,
       },
     },
-    //    list-of-lectures
+    // list-of-lectures
     lectures: {
       title: String,
       description: String,
@@ -39,11 +39,11 @@ const courseSchema = new Schema(
       lecture: {
         public_id: {
           type: String,
-          required: true,
+          // required: true,
         },
         secure_url: {
           type: String,
-          required: true,
+          // required: true,
         },
       },
     },
