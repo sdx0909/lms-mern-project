@@ -23,8 +23,9 @@ const authorizedRoles =
     const currentUserRole = req.user.role;
     // if role i
     if (!roles.includes(currentUserRole)) {
-      return next(new AppError("You do not have permission to access"));
+      return next(new AppError("You do not have permission to access", 401));
     }
+    next();
   };
 
 // exporting the isLoggedIn

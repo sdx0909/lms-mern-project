@@ -32,21 +32,23 @@ const courseSchema = new Schema(
       },
     },
     // list-of-lectures
-    lectures: {
-      title: String,
-      description: String,
-      // individual-lectures-thumbnail
-      lecture: {
-        public_id: {
-          type: String,
-          // required: true,
-        },
-        secure_url: {
-          type: String,
-          // required: true,
+    lectures: [
+      {
+        title: String,
+        description: String,
+        // individual-lectures-thumbnail
+        lecture: {
+          public_id: {
+            type: String,
+            // required: true,
+          },
+          secure_url: {
+            type: String,
+            // required: true,
+          },
         },
       },
-    },
+    ],
     numberOfLectures: {
       type: Number,
       default: 0,

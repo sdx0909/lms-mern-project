@@ -6,6 +6,7 @@ import {
   createCourse,
   updateCourse,
   removeCourse,
+  addLectureToCourseById,
 } from "../controllers/course.controller.js";
 import { authorizedRoles, isLoggedIn } from "../middlewares/auth.middleware.js";
 import upload from "../middlewares/multer.middleware.js";
@@ -17,7 +18,7 @@ router
   .route("/")
   // RULE: for every-one get all the courses details
   .get(getAllCourses) // for uploading the thumbnail-course-image
-  // todo : only admin can create the course
+  // RULE: only admin can create the course
   .post(
     isLoggedIn,
     authorizedRoles("ADMIN"),
@@ -32,7 +33,14 @@ router
   // RULE: only ADMIN user update the course details
   .put(isLoggedIn, authorizedRoles("ADMIN"), updateCourse)
   // RULE: only logged-in user remove the courses
-  .delete(isLoggedIn, removeCourse);
+  .delete(isLoggedIn, removeCourse)
+  // adding lectures to course
+  .post(
+    isLoggedIn,
+    authorizedRoles("ADMIN"),
+    upload.single("lecture"),
+    addLectureToCourseById
+  );
 
 // exporting the router
 export default router;

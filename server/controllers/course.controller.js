@@ -168,6 +168,77 @@ const removeCourse = async (req, res, next) => {
     return next(new AppError(e.message, 401));
   }
 };
+
+// adding the lecture to course by course-id
+const addLectureToCourseById = async (req, res, next) => {
+  try {
+    const { title, description } = req.body;
+    const { id } = req.params;
+
+    const course = await Course.findById(id);
+
+    if (!course) {
+      return next(new AppError("course with given id does not exists", 401));
+    }
+
+    if (!title || !description) {
+      return next(new AppError("title and description is required", 401));
+    }
+
+    const lectureData = {};
+
+    // if file is requested
+    if (req.file) {
+      try {
+        const result = await cloudinary.v2.uploader.upload(req.file.path, {
+          folder: "lms", // Save files in a folder named lms
+        });
+
+        // If success
+        if (result) {
+          // Set the public_id and secure_url in array
+          lectureData.public_id = result.public_id;
+          lectureData.secure_url = result.secure_url;
+        }
+
+        // After successful upload remove the file from local storage
+        fs.rm(`uploads/${req.file.filename}`);
+      } catch (error) {
+        // Empty the uploads directory without deleting the uploads directory
+        for (const file of await fs.readdir("uploads/")) {
+          await fs.unlink(path.join("uploads/", file));
+        }
+
+        // Send the error message
+        return next(
+          new AppError(
+            JSON.stringify(error) || "File not uploaded, please try again",
+            400
+          )
+        );
+      }
+    }
+
+    course.lectures.push({
+      title,
+      description,
+      lecture: lectureData,
+    });
+
+    course.numberOfLectures = course.lectures.length;
+
+    await course.save();
+
+    // success response
+    res.status(200).json({
+      success: true,
+      message: "Lecture added successfully to the course",
+      course,
+    });
+  } catch (e) {
+    return next(new AppError(e.message, 401));
+  }
+};
 // exporting the controllers
 export {
   getAllCourses,
@@ -175,4 +246,5 @@ export {
   updateCourse,
   removeCourse,
   createCourse,
+  addLectureToCourseById,
 };
