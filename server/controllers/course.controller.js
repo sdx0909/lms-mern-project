@@ -4,6 +4,7 @@ import AppError from "../utils/error.util.js";
 import fs from "fs/promises";
 import cloudinary from "cloudinary";
 import { resetPassword } from "./user.controller.js";
+import { log } from "console";
 
 const getAllCourses = async (req, res, next) => {
   // finding all the data from Course-collection excepting the "lectures" details
@@ -43,12 +44,15 @@ const getLecturesByCourseId = async (req, res, next) => {
   }
 };
 
-// crating courses by admin
+// creating courses by admin
 const createCourse = async (req, res, next) => {
   const { title, description, category, createdBy } = req.body;
 
   if (!title || !description || !category || !createdBy) {
-    return next(new AppError("All fields are required", 400));
+    console.log(
+      `title>${title}\description>${description}\ncategory>${category}\ncreatedBy>${createdBy}`
+    );
+    return next(new AppError("All fields are required", 401));
   }
 
   const course = await Course.create({
