@@ -7,6 +7,7 @@ import {
   updateCourse,
   removeCourse,
   addLectureToCourseById,
+  removeLectureFromCourse,
 } from "../controllers/course.controller.js";
 import { authorizedRoles, isLoggedIn } from "../middlewares/auth.middleware.js";
 import upload from "../middlewares/multer.middleware.js";
@@ -24,7 +25,8 @@ router
     authorizedRoles("ADMIN"),
     upload.single("thumbnail"),
     createCourse
-  );
+  )
+  .delete(isLoggedIn, authorizedRoles("ADMIN"), removeLectureFromCourse);
 
 router
   .route("/:id")
@@ -32,8 +34,8 @@ router
   .get(isLoggedIn, getLecturesByCourseId)
   // RULE: only ADMIN user update the course details
   .put(isLoggedIn, authorizedRoles("ADMIN"), updateCourse)
-  // RULE: only logged-in user remove the courses
-  .delete(isLoggedIn, removeCourse)
+  // RULE: only ADMIN user remove the courses
+  .delete(isLoggedIn, authorizedRoles("ADMIN"), removeCourse)
   // adding lectures to course
   .post(
     isLoggedIn,
